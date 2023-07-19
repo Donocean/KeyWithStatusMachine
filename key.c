@@ -39,10 +39,12 @@
 
 /* ---------------------------宏声明区--------------------------- */
 
-#define KEY_PRESS_DOWN       0X00 /* 按键按下 */
-#define KEY_RELEASE_UP       0X01 /* 按键松开 */
-#define KEY_MAX_FIFO_SIZE    0x10 /* 按键FIFO空间大小, 取值一定要为2的n次方 */
-#define KEY_NONE_IN_FIFO     0xFF /* 当前按键FIFO内无按键值 */
+#define KEY_PRESS_DOWN       0X00
+#define KEY_RELEASE_UP       0X01
+/* 按键FIFO空间大小, 取值一定要为2的n次方 */
+#define KEY_MAX_FIFO_SIZE    0x10
+/* 当前按键FIFO内无按键值 */
+#define KEY_NONE_IN_FIFO     0xFF
 
 /* 状态机状态 */
 enum ekey_state
