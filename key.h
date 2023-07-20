@@ -17,10 +17,10 @@
  */
 enum ekey_status
 {
-    KEY_SHORT_PRESS = 1,
-    KEY_LONG_PRESS,
-    KEY_DOUBLE_PRESS,
-    KEY_LONG_RELEASE_UP,
+    KEY_SHORT_PRESS = 0x0100,
+    KEY_LONG_PRESS = 0x0200,
+    KEY_DOUBLE_PRESS = 0x0300,
+    KEY_LONG_RELEASE_UP = 0x0400,
 };
 
 /**
@@ -38,12 +38,13 @@ enum ekey_num
 void key_scan(void);
 
 /**
- * @brief 从按键FIFO中读取按状态
+ * @brief 从按键FIFO中读取按键状态
  *
  * @return 返回[两字节]按键值
- *         高字节: 存放按键值(参考枚举值enum Key_Num)
- *         低字节: 存放存放按键值状态(参考enum ekey_status)
- *
+ *         低字节: 存放按键值    (参考枚举值enum ekey_num)
+ *         高字节: 存放按键值状态 (参考enum ekey_status)
+ *         若返回0xFFFF(KEY_NONE_IN_FIFO)，则说明没有检测到按键按下
+ * 
  * @note 请不要在按按键时阻塞此函数太久，如果fifo不够大将出现按键值覆盖情况
  */
 unsigned short key_read(void);

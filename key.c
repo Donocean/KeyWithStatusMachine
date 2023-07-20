@@ -44,7 +44,7 @@
 /* 按键FIFO空间大小, 取值一定要为2的n次方 */
 #define KEY_MAX_FIFO_SIZE    0x10
 /* 当前按键FIFO内无按键值 */
-#define KEY_NONE_IN_FIFO     0xFF
+#define KEY_NONE_IN_FIFO     0xFFFF
 
 /* 状态机状态 */
 enum ekey_state
@@ -143,11 +143,12 @@ void key_scan(void)
 }
 
 /**
- * @brief 从按键FIFO中读取按状态
+ * @brief 从按键FIFO中读取按键状态
  *
- * @return 返回[两字节]按键值，若返回值是0xFF(KEY_NONE_IN_FIFO)，则说明没有检测到按键按下
- *         高字节: 存放按键值(参考枚举值enum Key_Num)
- *         低字节: 存放存放按键值状态(参考enum ekey_status)
+ * @return 返回[两字节]按键值
+ *         低字节: 存放按键值    (参考枚举值enum ekey_num)
+ *         高字节: 存放按键值状态 (参考enum ekey_status)
+ *         若返回0xFFFF(KEY_NONE_IN_FIFO)，则说明没有检测到按键按下
  * 
  * @note 请不要在按按键时阻塞此函数太久，如果fifo不够大将出现按键值覆盖情况
  */
@@ -239,7 +240,7 @@ static void prvkey_state_check_long(key_dev *pKey_Dev)
         if (key_read == KEY_PRESS_DOWN)
         {
             /* 记录长按标志 */
-            key_val = (pKey_Dev->ucKeyNum << 8) | KEY_LONG_PRESS;
+            key_val = KEY_LONG_PRESS | pKey_Dev->ucKeyNum;
             prvkey_wirte_keyval(key_val);
             /* 进入长按松开检测 */
             pKey_Dev->ucStatus = KEY_STATE_CHECK_LONG_RELEASE_UP_FILTER;
@@ -267,9 +268,7 @@ static void prvkey_state_short_release_up_filter(key_dev *pkey_dev)
     pkey_dev->usCountTick++;
 
     if (pkey_dev->usCountTick < pkey_dev->usFilterPeriod)
-    {
         return;
-    }
 
     /* 超过消抖处理时间 */
     key_read = pkey_dev->read_Key();
@@ -315,7 +314,7 @@ static void prvkey_state_check_double_press(key_dev *pKey_Dev)
         if (key_read == KEY_RELEASE_UP)
         {
             /* 回到最初检测按下状态 */
-            key_val = (pKey_Dev->ucKeyNum << 8) | KEY_SHORT_PRESS;
+            key_val = KEY_SHORT_PRESS | pKey_Dev->ucKeyNum;
             prvkey_wirte_keyval(key_val);
             pKey_Dev->ucStatus = KEY_STATE_CHECK_PRESS_DOWN;
         }
@@ -343,9 +342,7 @@ static void prvkey_state_double_press_filter(key_dev *pKey_Dev)
     pKey_Dev->usCountTick++;
 
     if (pKey_Dev->usCountTick < pKey_Dev->usFilterPeriod)
-    {
         return;
-    }
 
     key_read = pKey_Dev->read_Key();
 
@@ -353,7 +350,7 @@ static void prvkey_state_double_press_filter(key_dev *pKey_Dev)
     if (key_read == KEY_PRESS_DOWN)
     {
         /* 记录双击状态， */
-        key_val = (pKey_Dev->ucKeyNum << 8) | KEY_DOUBLE_PRESS;
+        key_val = KEY_DOUBLE_PRESS | pKey_Dev->ucKeyNum;
         prvkey_wirte_keyval(key_val);
         pKey_Dev->ucStatus = KEY_STATE_CHECK_DOUBLE_RELEASE_UP_FILTER;
         pKey_Dev->usCountTick = 0;
@@ -363,6 +360,7 @@ static void prvkey_state_double_press_filter(key_dev *pKey_Dev)
         pKey_Dev->ucStatus = KEY_STATE_CHECK_DOUBLE_PRESS;
         pKey_Dev->usCountTick += old;
     }
+
     old = 0xffff;
 }
 
@@ -374,24 +372,19 @@ static void prvkey_state_check_double_release_up_filter(key_dev *pKey_Dev)
 
     /* 若还在按着，则直接返回 */
     if (ucKey_Read == KEY_PRESS_DOWN)
-    {
         return;
-    }
-
+    
     /* 进行松开消抖 */
     pKey_Dev->usCountTick++;
 
     if (pKey_Dev->usCountTick < pKey_Dev->usFilterPeriod)
-    {
         return;
-    }
-
+    
     /* 双击松开，回到最初检测 */
     if (ucKey_Read == KEY_RELEASE_UP)
-    {
         pKey_Dev->ucStatus = KEY_STATE_CHECK_PRESS_DOWN;
-    }
 }
+
 static void prvkey_state_check_long_release_up_filter(key_dev *pKey_Dev)
 {
     unsigned char key_read;
@@ -400,22 +393,18 @@ static void prvkey_state_check_long_release_up_filter(key_dev *pKey_Dev)
 
     /* 若长按还在进行，则直接返回 */
     if (key_read == KEY_PRESS_DOWN)
-    {
         return;
-    }
 
     /* 若长按松开，进行松开消抖 */
     pKey_Dev->usCountTick++;
 
     if (pKey_Dev->usCountTick < pKey_Dev->usFilterPeriod)
-    {
         return;
-    }
 
     if (key_read == KEY_RELEASE_UP)
     {
         /* 消抖时间到，回到最初检测按下状态 */
-        key_val = (pKey_Dev->ucKeyNum << 8) | KEY_LONG_RELEASE_UP;
+        key_val =  KEY_LONG_RELEASE_UP | pKey_Dev->ucKeyNum;
         prvkey_wirte_keyval(key_val);
         pKey_Dev->ucStatus = KEY_STATE_CHECK_PRESS_DOWN;
     }
@@ -456,7 +445,7 @@ static void prvkey_check_key_status(key_dev *pKey_Dev)
  * @brief 将检测的按键值写入fifo(私有函数，内部调用)
  *
  * @param ucKeyVal 按键值按两字节存储
- *                | 高字节存放按键值 | 低字节存放存放按键值状态 |
+ *                | 高字节存放按键值状态 | 低字节存放存放按键值 |
  */
 static void prvkey_wirte_keyval(unsigned short ucKeyVal)
 {
