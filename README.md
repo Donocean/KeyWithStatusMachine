@@ -72,8 +72,8 @@ while (1)
 
     if (key_value != KEY_NONE_IN_FIFO)
     {
-        unsigned char key_num =  key_value && 0xFF;
-        unsigned char key_status =  key_value >> 8;
+        unsigned char key_num =  key_value & 0xFF;
+        unsigned char key_status =  key_value & 0xFF00;
 
         switch (key_num)
         {
