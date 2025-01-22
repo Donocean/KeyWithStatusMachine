@@ -5,7 +5,7 @@
  * @version 1.0
  * @date 2023-07-19
  *
- * @copyright Copyright (c) 2023
+ * @copyright Copyright (c) 2025
  * 
  * @note 按键按下的三种情况
  * |--------------------------------------------------------------------|
@@ -41,10 +41,6 @@
 
 #define KEY_PRESS_DOWN       0X00
 #define KEY_RELEASE_UP       0X01
-/* 按键FIFO空间大小, 取值一定要为2的n次方 */
-#define KEY_MAX_FIFO_SIZE    0x10
-/* 当前按键FIFO内无按键值 */
-#define KEY_NONE_IN_FIFO     0xFFFF
 
 /* 状态机状态 */
 enum ekey_state
@@ -116,11 +112,17 @@ struct _key_fifo key_fifo;
 
 key_dev key_device[] = {
     {
+        /* 按键初始状态 */
         KEY_STATE_CHECK_PRESS_DOWN,
+        /* 当前是哪个按键 (取值参考enum ekey_num) */
         KEY0,
+       /* 计数器默认为0 */
         0,
+        /* 长按检测时间，若1ms执行一次key_scan()，则检测时间单位就是1ms */
         1500,
+        /* 按键滤波时间 */
         20,
+        /* 双击检测最大间隔时间 */
         300,
         uckey0_read
     },
@@ -128,9 +130,6 @@ key_dev key_device[] = {
 
 };
 
-/**
- * @brief 按键检测函数，此函数需要1ms执行一次
- */
 void key_scan(void)
 {
     unsigned char i;
@@ -142,16 +141,6 @@ void key_scan(void)
     }
 }
 
-/**
- * @brief 从按键FIFO中读取按键状态
- *
- * @return 返回[两字节]按键值
- *         低字节: 存放按键值    (参考枚举值enum ekey_num)
- *         高字节: 存放按键值状态 (参考enum ekey_status)
- *         若返回0xFFFF(KEY_NONE_IN_FIFO)，则说明没有检测到按键按下
- * 
- * @note 请不要在按按键时阻塞此函数太久，如果fifo不够大将出现按键值覆盖情况
- */
 unsigned short key_read(void)
 {
     unsigned short uckey_val;

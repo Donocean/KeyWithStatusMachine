@@ -62,7 +62,35 @@ key_dev key_device[] = {
 - 检测按键: ` void key_scan(void)`
 - 读按键fifo: `unsigned short key_read(void)`
 
-请参考注释说明进行使用
+
+- 用法实例：
+
+```c
+while (1)
+{
+    unsigned short key_value = key_read();
+
+    if (key_value != KEY_NONE_IN_FIFO)
+    {
+        unsigned char key_num =  key_value && 0xFF;
+        unsigned char key_status =  key_value >> 8;
+
+        switch (key_num)
+        {
+            case KEY0:
+                if (key_status == KEY_SHORT_PRESS)
+                {
+                    /* do something...  */
+                }
+                break;
+            case KEY1:
+                    /* do something...  */
+        }
+    }
+}
+```
+
+更多信息，请参考注释说明进行使用
 
 ---
 
